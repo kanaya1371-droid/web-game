@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Lupa Password</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+
+<body>
+  <div class="card">
+    <h2>🔁 Lupa Password</h2>
+
+    <input id="username" placeholder="Username terdaftar">
+
+    <button onclick="requestReset()">Minta OTP Reset Password</button>
+
+    <small>
+      Sudah dapat OTP?
+      <a href="reset.html">Masukkan OTP di sini</a>
+    </small>
+  </div>
+
+<script>
+const ADMIN_WA = "6289526628983"; // GANTI nomor admin
+
+function requestReset() {
+  const username = document.getElementById("username").value.trim();
+
+  if (!username) {
+    alert("Username wajib diisi");
+    return;
+  }
+
+  const text = encodeURIComponent(
+    `Halo Admin, saya user dengan username ${username} lupa password dan meminta OTP reset password.`
+  );
+
+  window.open(`https://wa.me/${ADMIN_WA}?text=${text}`, "_blank");
+}
+</script>
+</body>
+</html>

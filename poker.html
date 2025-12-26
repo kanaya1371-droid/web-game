@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Poker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+
+<body>
+<div class="card">
+  <h2>🎴 Poker</h2>
+
+  <p style="text-align:center">
+    Coin: <b id="coin"></b>
+  </p>
+
+  <input id="bet" type="number" placeholder="Masukkan bet">
+
+  <button onclick="play()">Mainkan</button>
+
+  <p id="result" style="text-align:center;margin-top:12px"></p>
+
+  <button onclick="back()" style="margin-top:16px">⬅ Kembali</button>
+</div>
+
+<script>
+const API = "/.netlify/functions/api";
+const userId = localStorage.getItem("userId");
+let coins = parseInt(localStorage.getItem("coins") || "0");
+
+if (!userId) window.location.href = "login.html";
+document.getElementById("coin").innerText = coins;
+
+// ===== Statistik =====
+function updateStats(win, bet) {
+  const stats = JSON.parse(localStorage.getItem("stats") || "{}");
+  stats.play = (stats.play || 0) + 1;
+  stats.bet  = (stats.bet  || 0) + bet;
+  win ? stats.win = (stats.win || 0) + 1
+      : stats.lose = (stats.lose || 0) + 1;
+  localStorage.setItem("stats", JSON.stringify(stats));
+}
+
+// ===== Riwayat =====
+function saveHistory(bet, win) {
+  const history = JSON.parse(localStorage.getItem("history") || "[]");
+  history.push({
+    game: "Poker",
+    bet,
+    result: win ? "Menang" : "Kalah",
+    time: new Date().toLocaleString()
+  });
+  localStorage.setItem("history", JSON.stringify(history));
+}
+
+async function play() {
+  const bet = parseInt(document.getElementById("bet").value);
+  if (!bet || bet <= 0) return alert("Bet tidak valid");
+  if (bet > coins) return alert("Coin tidak cukup");
+
+  // 🔑 Ambil CONTROL MODE terbaru
+  const userRes = await fetch(API + "/admin/users");
+  const users = await userRes.json();
+  const user = users.find(u => u._id === userId);
+  const mode = user?.controlMode || "normal";
+
+  let winChance = 0.48; // normal RTP
+
+  if (mode === "lose") winChance = 0.05;
+  if (mode === "win")  winChance = 0.85;
+
+  const win = Math.random() < winChance;
+
+  await fetch(API + "/bet", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ userId, bet, win })
+  });
+
+  coins += win ? bet : -bet;
+  localStorage.setItem("coins", coins);
+  document.getElementById("coin").innerText = coins;
+
+  updateStats(win, bet);
+  saveHistory(bet, win);
+
+  document.getElementById("result").innerText =
+    `MODE: ${mode.toUpperCase()} → ` +
+    (win ? "🎉 MENANG!" : "❌ KALAH!");
+}
+
+function back() {
+  window.location.href = "home.html";
+}
+</script>
+</body>
+</html>

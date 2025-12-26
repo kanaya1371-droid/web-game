@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Admin Statistik</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+
+<body>
+<div class="card" style="max-width:600px">
+  <h2>📊 Statistik Global</h2>
+
+  <button onclick="load()">🔄 Refresh</button>
+
+  <hr style="border:1px solid #1f2937;margin:16px 0">
+
+  <p>
+    Total Bet: <b id="totalBet">0</b><br>
+    Total Menang: <b id="totalWin">0</b><br>
+    Total Kalah: <b id="totalLose">0</b>
+  </p>
+
+  <hr style="border:1px solid #1f2937;margin:16px 0">
+
+  <h3>🏆 Top User (Profit)</h3>
+  <ul id="topProfit"></ul>
+
+  <h3>🔥 Top User (Aktif)</h3>
+  <ul id="topPlay"></ul>
+
+  <button onclick="back()" style="margin-top:16px">⬅ Kembali</button>
+</div>
+
+<script>
+const API = "/.netlify/functions/api";
+const ADMIN_KEY = "admin123"; // samakan dengan admin.html
+
+async function load() {
+  // ambil semua user
+  const res = await fetch(API + "/admin/users", {
+    headers: { "x-admin-key": ADMIN_KEY }
+  });
+  const users = await res.json();
+
+  let totalBet = 0;
+  let totalWin = 0;
+  let totalLose = 0;
+
+  users.forEach(u => {
+    totalBet += u.totalBet || 0;
+    totalWin += u.totalWin || 0;
+    totalLose += u.totalLose || 0;
+  });
+
+  document.getElementById("totalBet").innerText = totalBet;
+  document.getElementById("totalWin").innerText = totalWin;
+  document.getElementById("totalLose").innerText = totalLose;
+
+  // Top profit
+  const profitSorted = [...users].sort((a,b)=>
+    (b.coins||0)-(a.coins||0)
+  ).slice(0,5);
+
+  document.getElementById("topProfit").innerHTML =
+    profitSorted.map(u=>`<li>${u.username} (${u.coins})</li>`).join("");
+
+  // Top aktif
+  const playSorted = [...users].sort((a,b)=>
+    (b.totalPlay||0)-(a.totalPlay||0)
+  ).slice(0,5);
+
+  document.getElementById("topPlay").innerHTML =
+    playSorted.map(u=>`<li>${u.username} (${u.totalPlay||0}x)</li>`).join("");
+}
+
+function back() {
+  window.location.href = "admin.html";
+}
+</script>
+</body>
+</html>

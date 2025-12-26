@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Reset Password</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+
+<body>
+  <div class="card">
+    <h2>🔐 Reset Password</h2>
+
+    <input id="username" placeholder="Username">
+    <input id="otp" placeholder="Kode OTP">
+    <input id="password" type="password" placeholder="Password Baru">
+
+    <button onclick="resetPassword()">Simpan Password Baru</button>
+
+    <small>
+      Sudah ingat password?
+      <a href="login.html">Login</a>
+    </small>
+  </div>
+
+<script>
+const API = "/.netlify/functions/api";
+
+async function resetPassword() {
+  const username = document.getElementById("username").value.trim();
+  const code = document.getElementById("otp").value.trim();
+  const newPassword = document.getElementById("password").value.trim();
+
+  if (!username || !code || !newPassword) {
+    alert("Semua field wajib diisi");
+    return;
+  }
+
+  const res = await fetch(API + "/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, code, newPassword })
+  });
+
+  const data = await res.json();
+  alert(data.msg);
+
+  if (res.ok) {
+    window.location.href = "login.html";
+  }
+}
+</script>
+</body>
+</html>

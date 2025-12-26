@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+
+<body>
+  <div class="card">
+    <h2>Login</h2>
+
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+
+    <button onclick="login()">Login</button>
+
+<small>
+  Belum punya akun?
+  <a href="register.html">Daftar</a><br>
+  <a href="forgot.html">Lupa password?</a>
+</small>
+
+  </div>
+
+<script>
+const API = "/.netlify/functions/api";
+
+async function login() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!username || !password) {
+    alert("Username dan password wajib diisi");
+    return;
+  }
+
+  try {
+    const res = await fetch(API + "/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await res.json();
+    alert(data.msg);
+
+    if (!res.ok) return;
+
+    // Simpan session
+    localStorage.setItem("userId", data.userId);
+    localStorage.setItem("username", username);
+    localStorage.setItem("coins", data.coins);
+
+    window.location.href = "home.html";
+  } catch (err) {
+    alert("Gagal terhubung ke server");
+  }
+}
+</script>
+</body>
+</html>

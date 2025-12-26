@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Home</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/layout.css">
+</head>
+
+<body>
+
+<!-- ☰ MENU BUTTON -->
+<div class="menu-btn" onclick="toggleMenu()">☰</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <h3>Menu</h3>
+  <a href="deposit.html">💰 Deposit</a>
+  <a href="withdraw.html">💸 Withdraw</a>
+  <a href="statistik.html">📊 Statistik</a>
+  <a href="profil.html">👤 Profil</a>
+  <a href="history.html">🕓 Riwayat Bermain</a>
+  <a href="#" onclick="logout()">🚪 Logout</a>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<!-- CONTENT -->
+<div class="card" style="margin-top:40px">
+  <h2>Lobby Game</h2>
+
+  <p style="text-align:center">
+    User: <b id="user"></b><br>
+    Coin: <b id="coin"></b>
+  </p>
+
+  <button onclick="go('poker.html')">🎴 Poker</button>
+  <button onclick="go('blackjack.html')">🂡 Blackjack</button>
+  <button onclick="go('dadu.html')">🎲 Dadu</button>
+</div>
+
+<script>
+const username = localStorage.getItem("username");
+const coins = localStorage.getItem("coins");
+
+if (!username) {
+  window.location.href = "login.html";
+}
+
+document.getElementById("user").innerText = username;
+document.getElementById("coin").innerText = coins || 0;
+
+function go(page) {
+  window.location.href = page;
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+function toggleMenu() {
+  document.getElementById("sidebar").classList.toggle("active");
+  document.getElementById("overlay").classList.toggle("active");
+}
+</script>
+</body>
+</html>

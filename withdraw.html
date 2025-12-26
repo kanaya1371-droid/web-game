@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Withdraw</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/layout.css">
+</head>
+
+<body>
+
+<!-- ☰ MENU BUTTON -->
+<div class="menu-btn" onclick="toggleMenu()">☰</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <h3>Menu</h3>
+  <a href="deposit.html">💰 Deposit</a>
+  <a href="withdraw.html">💸 Withdraw</a>
+  <a href="statistik.html">📊 Statistik</a>
+  <a href="profil.html">👤 Profil</a>
+  <a href="history.html">🕓 Riwayat Bermain</a>
+  <a href="#" onclick="logout()">🚪 Logout</a>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<!-- CONTENT -->
+<div class="card" style="margin-top:40px">
+  <h2>💸 Withdraw Coin</h2>
+
+  <p style="text-align:center">
+    User: <b id="user"></b><br>
+    Coin saat ini: <b id="coin"></b>
+  </p>
+
+  <input id="amount" type="number" placeholder="Masukkan jumlah withdraw">
+
+  <button onclick="withdraw()">Kirim Request Withdraw</button>
+
+  <hr style="border:1px solid #1f2937;margin:16px 0">
+
+  <h3>📌 Syarat & Ketentuan</h3>
+  <ul style="font-size:14px;color:#9ca3af">
+    <li>Minimal withdraw <b>50.000 coin</b></li>
+    <li>Saldo harus mencukupi</li>
+    <li>Withdraw diproses admin (tidak instan)</li>
+  </ul>
+
+  <button onclick="back()" style="margin-top:18px">
+    ⬅ Kembali ke Home
+  </button>
+</div>
+
+<script>
+const API = "/.netlify/functions/api";
+const username = localStorage.getItem("username");
+let coins = parseInt(localStorage.getItem("coins") || "0");
+
+if (!username) {
+  window.location.href = "login.html";
+}
+
+document.getElementById("user").innerText = username;
+document.getElementById("coin").innerText = coins;
+
+async function withdraw() {
+  const amount = parseInt(document.getElementById("amount").value);
+
+  if (!amount || amount < 50000) {
+    alert("Minimal withdraw adalah 50.000 coin");
+    return;
+  }
+
+  if (amount > coins) {
+    alert("Saldo coin tidak mencukupi");
+    return;
+  }
+
+  const res = await fetch(API + "/request/withdraw", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ username, amount })
+  });
+
+  const data = await res.json();
+  alert(data.msg);
+}
+
+function back() {
+  window.location.href = "home.html";
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+function toggleMenu() {
+  document.getElementById("sidebar").classList.toggle("active");
+  document.getElementById("overlay").classList.toggle("active");
+}
+</script>
+</body>
+</html>

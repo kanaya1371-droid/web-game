@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Dadu</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.dice-wrap{display:flex;justify-content:center;gap:16px;margin:12px 0}
+.dice{font-size:48px;transition:.3s}
+.shake{animation:shake .6s}
+@keyframes shake{
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-6px)}
+  50%{transform:translateX(6px)}
+  75%{transform:translateX(-6px)}
+  100%{transform:translateX(0)}
+}
+</style>
+</head>
+
+<body>
+<div class="card">
+  <h2>🎲 Dadu</h2>
+  <p style="text-align:center">Coin: <b id="coin"></b></p>
+
+  <div class="dice-wrap">
+    <div id="d1" class="dice">🎲</div>
+    <div id="d2" class="dice">🎲</div>
+  </div>
+
+  <input id="bet" type="number" placeholder="Masukkan bet">
+  <button onclick="play('kecil')">KECIL (3–7)</button>
+  <button onclick="play('besar')">BESAR (8–12)</button>
+
+  <p id="result" style="text-align:center;margin-top:12px"></p>
+  <button onclick="back()" style="margin-top:16px">⬅ Kembali</button>
+</div>
+
+<script>
+const API="/.netlify/functions/api";
+const userId=localStorage.getItem("userId");
+let coins=parseInt(localStorage.getItem("coins")||"0");
+if(!userId) location.href="login.html";
+coin.innerText=coins;
+
+async function play(choice){
+  const bet=+betEl.value;
+  if(!bet||bet<=0) return alert("Bet tidak valid");
+  if(bet>coins) return alert("Coin tidak cukup");
+
+  // ambil control mode
+  const users=await (await fetch(API+"/admin/users")).json();
+  const user=users.find(u=>u._id===userId);
+  const mode=user?.controlMode||"normal";
+
+  d1.classList.add("shake"); d2.classList.add("shake");
+  setTimeout(async()=>{
+    d1.classList.remove("shake"); d2.classList.remove("shake");
+
+    let a=Math.ceil(Math.random()*6), b=Math.ceil(Math.random()*6);
+    let total=a+b;
+
+    if(mode==="lose") total = (choice==="kecil")?10:4;
+    if(mode==="win")  total = (choice==="kecil")?4:10;
+
+    d1.textContent=a; d2.textContent=b;
+
+    const win = (choice==="kecil" && total<=7) || (choice==="besar" && total>=8);
+
+    await fetch(API+"/bet",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({userId,bet,win})});
+
+    coins+= win?bet:-bet; localStorage.setItem("coins",coins); coin.innerText=coins;
+    result.innerText=`Total ${total} → ${win?"🎉 MENANG":"❌ KALAH"}`;
+  },600);
+}
+const betEl=document.getElementById("bet");
+function back(){location.href="home.html";}
+</script>
+</body>
+</html>

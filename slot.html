@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Slot</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.reels {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  font-size: 36px;
+  margin: 16px 0;
+}
+.reel {
+  width: 64px;
+  height: 64px;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #020617;
+}
+</style>
+</head>
+
+<body>
+<div class="card">
+  <h2>🎰 Slot</h2>
+
+  <p style="text-align:center">
+    Coin: <b id="coin"></b>
+  </p>
+
+  <div class="reels">
+    <div class="reel" id="r1">❓</div>
+    <div class="reel" id="r2">❓</div>
+    <div class="reel" id="r3">❓</div>
+  </div>
+
+  <input id="bet" type="number" placeholder="Masukkan bet">
+
+  <button onclick="spin()">SPIN</button>
+
+  <p id="result" style="text-align:center;margin-top:12px"></p>
+
+  <button onclick="back()" style="margin-top:16px">⬅ Kembali</button>
+</div>
+
+<script>
+const API = "/.netlify/functions/api";
+const userId = localStorage.getItem("userId");
+let coins = parseInt(localStorage.getItem("coins") || "0");
+
+if (!userId) window.location.href = "login.html";
+document.getElementById("coin").innerText = coins;
+
+const goodSymbols = ["🍒","🍋","🔔","⭐","7️⃣"];
+const badSymbols  = ["🍂","🪨","🥀","🧱","❌"];
+
+/* ===== Statistik ===== */
+function updateStats(win, bet) {
+  const stats = JSON.parse(localStorage.getItem("stats") || "{}");
+  stats.play = (stats.play || 0) + 1;
+  stats.bet  = (stats.bet  || 0) + bet;
+  win ? stats.win = (stats.win || 0) + 1
+      : stats.lose = (stats.lose || 0) + 1;
+  localStorage.setItem("stats", JSON.stringify(stats));
+}
+
+/* ===== Riwayat ===== */
+function saveHistory(bet, win, combo) {
+  const history = JSON.parse(localStorage.getItem("history") || "[]");
+  history.push({
+    game: "Slot",
+    bet,
+    result: win ? "Menang" : "Kalah",
+    detail: combo.join(" "),
+    time: new Date().toLocaleString()
+  });
+  localStorage.setItem("history", JSON.stringify(history));
+}
+
+async function spin() {
+  const bet = parseInt(document.getElementById("bet").value);
+  if (!bet || bet <= 0) return alert("Bet tidak valid");
+  if (bet > coins) return alert("Coin tidak cukup");
+
+  /* 🔑 Ambil CONTROL MODE terbaru */
+  const resUser = await fetch(API + "/admin/users");
+  const users = await resUser.json();
+  const user = users.find(u => u._id === userId);
+  const mode = user?.controlMode || "normal";
+
+  let r1, r2, r3;
+  let win = false;
+  let payout = 0;
+
+  if (mode === "lose") {
+    // Simbol jelek dominan
+    r1 = badSymbols[Math.floor(Math.random()*badSymbols.length)];
+    r2 = badSymbols[Math.floor(Math.random()*badSymbols.length)];
+    r3 = badSymbols[Math.floor(Math.random()*badSymbols.length)];
+    win = Math.random() < 0.03; // hampir selalu kalah
+    payout = win ? bet : 0;
+  }
+  else if (mode === "win") {
+    // Peluang match tinggi
+    const sym = goodSymbols[Math.floor(Math.random()*goodSymbols.length)];
+    r1 = sym;
+    r2 = sym;
+    r3 = Math.random() < 0.8 ? sym : goodSymbols[Math.floor(Math.random()*goodSymbols.length)];
+    win = (r1 === r2 && r2 === r3) || Math.random() < 0.85;
+    payout = win ? bet * 2 : 0;
+  }
+  else {
+    // NORMAL RTP ±95%
+    r1 = goodSymbols[Math.floor(Math.random()*goodSymbols.length)];
+    r2 = goodSymbols[Math.floor(Math.random()*goodSymbols.length)];
+    r3 = goodSymbols[Math.floor(Math.random()*goodSymbols.length)];
+    win = (r1 === r2 && r2 === r3) || Math.random() < 0.05;
+    payout = win ? bet * 2 : 0;
+  }
+
+  document.getElementById("r1").innerText = r1;
+  document.getElementById("r2").innerText = r2;
+  document.getElementById("r3").innerText = r3;
+
+  await fetch(API + "/bet", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ userId, bet, win })
+  });
+
+  coins += win ? payout : -bet;
+  localStorage.setItem("coins", coins);
+  document.getElementById("coin").innerText = coins;
+
+  updateStats(win, bet);
+  saveHistory(bet, win, [r1, r2, r3]);
+
+  document.getElementById("result").innerText =
+    `MODE: ${mode.toUpperCase()} → ` +
+    (win ? `🎉 MENANG ${payout} coin!` : "❌ KALAH!");
+}
+
+function back() {
+  window.location.href = "home.html";
+}
+</script>
+</body>
+</html>

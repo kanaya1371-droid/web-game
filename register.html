@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Daftar</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+
+<body>
+  <div class="card">
+    <h2>Daftar Akun</h2>
+
+    <input id="username" placeholder="Username">
+    <input id="whatsapp" placeholder="Nomor WhatsApp">
+    <input id="password" type="password" placeholder="Password">
+
+    <button onclick="register()">Daftar</button>
+
+    <small>
+      Sudah punya akun?
+      <a href="login.html">Login</a>
+    </small>
+  </div>
+
+<script>
+const API = "/.netlify/functions/api";
+
+async function register() {
+  const username = document.getElementById("username").value.trim();
+  const whatsapp = document.getElementById("whatsapp").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!username || !password) {
+    alert("Username dan password wajib diisi");
+    return;
+  }
+
+  try {
+    const res = await fetch(API + "/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, whatsapp, password })
+    });
+
+    const data = await res.json();
+    alert(data.msg);
+ 
+  if (res.ok) {
+  window.location.href = "otp.html";
+}
+
+ catch (err) {
+    alert("Gagal terhubung ke server");
+  }
+}
+</script>
+</body>
+</html>

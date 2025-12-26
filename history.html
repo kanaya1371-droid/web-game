@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Riwayat Bermain</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/layout.css">
+</head>
+
+<body>
+
+<!-- ☰ MENU BUTTON -->
+<div class="menu-btn" onclick="toggleMenu()">☰</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <h3>Menu</h3>
+  <a href="deposit.html">💰 Deposit</a>
+  <a href="withdraw.html">💸 Withdraw</a>
+  <a href="statistik.html">📊 Statistik</a>
+  <a href="profil.html">👤 Profil</a>
+  <a href="history.html">🕓 Riwayat Bermain</a>
+  <a href="#" onclick="logout()">🚪 Logout</a>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<!-- CONTENT -->
+<div class="card" style="margin-top:40px">
+  <h2>🕓 Riwayat Bermain</h2>
+
+  <ul id="list" style="font-size:14px"></ul>
+
+  <button onclick="back()" style="margin-top:16px">
+    ⬅ Kembali ke Home
+  </button>
+</div>
+
+<script>
+const username = localStorage.getItem("username");
+if (!username) window.location.href = "login.html";
+
+const listEl = document.getElementById("list");
+const history = JSON.parse(localStorage.getItem("history") || "[]");
+
+if (history.length === 0) {
+  listEl.innerHTML = "<li>Belum ada riwayat bermain</li>";
+} else {
+  history.reverse().forEach(h => {
+    listEl.innerHTML += `
+      <li style="margin-bottom:10px">
+        <b>${h.game}</b><br>
+        Bet: ${h.bet}<br>
+        Hasil: ${h.result}<br>
+        Waktu: ${h.time}
+      </li>
+    `;
+  });
+}
+
+function back() {
+  window.location.href = "home.html";
+}
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+function toggleMenu() {
+  document.getElementById("sidebar").classList.toggle("active");
+  document.getElementById("overlay").classList.toggle("active");
+}
+</script>
+</body>
+</html>
