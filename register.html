@@ -1,36 +1,53 @@
-<button id="btnDaftar" type="button">Daftar</button>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Daftar</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<div class="card">
+  <h2>Daftar Akun</h2>
+
+  <input id="username" placeholder="Username">
+  <input id="phone" placeholder="Nomor WhatsApp">
+  <input id="password" type="password" placeholder="Password">
+
+  <button id="btnDaftar">Daftar</button>
+
+  <p>Sudah punya akun? <a href="login.html">Login</a></p>
+</div>
 
 <script>
-const API = "https://budil138.netlify.app";
+const API = "https://obel88.up.railway.app";
 
 document.getElementById("btnDaftar").onclick = async () => {
-  const username = document.getElementById("username").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const username = username.value.trim();
+  const phone = phone.value.trim();
+  const password = password.value.trim();
 
   if (!username || !phone || !password) {
-    alert("Semua field wajib diisi");
+    alert("Lengkapi semua data");
     return;
   }
 
-  try {
-    const res = await fetch(API + "/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, phone, password })
-    });
+  const res = await fetch(API + "/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, phone, password })
+  });
 
-    const data = await res.json();
+  const data = await res.json();
 
-    if (data.success) {
-      localStorage.setItem("otp_user", username);
-      window.location.href = "otp.html";
-    } else {
-      alert(data.message || "Gagal daftar");
-    }
-  } catch (err) {
-    alert("Backend tidak merespon");
-    console.error(err);
+  if (data.success) {
+    localStorage.setItem("otp_user", username);
+    location.href = "otp.html";
+  } else {
+    alert(data.message || "Gagal daftar");
   }
 };
 </script>
+
+</body>
+</html>
