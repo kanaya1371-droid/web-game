@@ -1,7 +1,9 @@
-<script>
-const API = "https://budil88.up.railway.app";
+<button id="btnDaftar" type="button">Daftar</button>
 
-document.getElementById("btnDaftar").addEventListener("click", async () => {
+<script>
+const API = "https://budil138.netlify.app";
+
+document.getElementById("btnDaftar").onclick = async () => {
   const username = document.getElementById("username").value.trim();
   const phone = document.getElementById("phone").value.trim();
   const password = document.getElementById("password").value.trim();
@@ -12,16 +14,10 @@ document.getElementById("btnDaftar").addEventListener("click", async () => {
   }
 
   try {
-    const res = await fetch(API + "/api/register", {
+    const res = await fetch(API + "/register", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        username,
-        phone,
-        password
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, phone, password })
     });
 
     const data = await res.json();
@@ -30,11 +26,11 @@ document.getElementById("btnDaftar").addEventListener("click", async () => {
       localStorage.setItem("otp_user", username);
       window.location.href = "otp.html";
     } else {
-      alert(data.message || "Gagal mendaftar");
+      alert(data.message || "Gagal daftar");
     }
   } catch (err) {
     alert("Backend tidak merespon");
     console.error(err);
   }
-});
+};
 </script>
