@@ -1,103 +1,66 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daftar Akun</title>
-
-<style>
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{
-  margin:0;height:100vh;
-  background:linear-gradient(120deg,#0f2027,#203a43,#2c5364);
-  display:flex;align-items:center;justify-content:center;
-  animation:bgMove 10s infinite alternate;
-  color:#fff;
-}
-@keyframes bgMove{
-  0%{background-position:0% 50%}
-  100%{background-position:100% 50%}
-}
-.card{
-  width:90%;max-width:360px;
-  background:rgba(0,0,0,.6);
-  padding:28px;border-radius:16px;
-  box-shadow:0 20px 40px rgba(0,0,0,.6);
-  animation:fadeIn .6s ease;
-}
-@keyframes fadeIn{
-  from{opacity:0;transform:translateY(20px)}
-  to{opacity:1;transform:translateY(0)}
-}
-h2{text-align:center;margin-bottom:20px}
-input{
-  width:100%;padding:14px;
-  margin-bottom:14px;border:none;
-  border-radius:10px;font-size:15px;
-}
-button{
-  width:100%;padding:14px;
-  border:none;border-radius:10px;
-  background:#1abc9c;color:#000;
-  font-size:16px;font-weight:bold;
-  cursor:pointer;
-}
-.link{
-  text-align:center;margin-top:14px;
-  font-size:14px;
-}
-.link a{color:#1abc9c;text-decoration:none}
-</style>
+  <meta charset="UTF-8" />
+  <title>Daftar Akun</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="assets/style.css" />
 </head>
-
 <body>
 
 <div class="card">
   <h2>Daftar Akun</h2>
 
-  <form id="registerForm">
-    <input id="username" placeholder="Username" required>
-    <input id="whatsapp" placeholder="No WhatsApp (08xxxx)" required>
-    <input id="password" type="password" placeholder="Password" required>
-    <button type="submit">Daftar</button>
-  </form>
+  <input type="text" id="username" placeholder="Username" />
+  <input type="tel" id="phone" placeholder="Nomor WhatsApp" />
+  <input type="password" id="password" placeholder="Password" />
 
-  <div class="link">
-    Sudah punya akun? <a href="login.html">Login</a>
-  </div>
+  <button id="btnDaftar">Daftar</button>
+
+  <p>Sudah punya akun? <a href="login.html">Login</a></p>
 </div>
 
 <script>
-const API = "/.netlify/functions/api";
+const API = "https://obel88.up.railway.app";
 
-document.getElementById("registerForm").addEventListener("submit", async (e)=>{
-  e.preventDefault();
-
+document.getElementById("btnDaftar").addEventListener("click", async () => {
   const username = document.getElementById("username").value.trim();
-  const whatsapp = document.getElementById("whatsapp").value.trim();
+  const phone = document.getElementById("phone").value.trim();
   const password = document.getElementById("password").value.trim();
 
-  if(!username || !whatsapp || !password){
-    alert("Lengkapi semua data");
+  if (!username || !phone || !password) {
+    alert("Semua field wajib diisi");
     return;
   }
 
-  try{
-    const res = await fetch(API + "/register",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ username, whatsapp, password })
+  try {
+    const res = await fetch(API + "/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username,
+        phone,
+        password
+      })
     });
 
     const data = await res.json();
-    alert(data.message);
 
-    if(res.ok){
-      localStorage.setItem("pendingUser", username);
+    if (data.success) {
+      // simpan username utk OTP
+      localStorage.setItem("otp_user", username);
+
+      // PINDAH KE HALAMAN OTP
       window.location.href = "otp.html";
+    } else {
+      alert(data.message || "Gagal mendaftar");
     }
-  }catch(err){
-    alert("Gagal koneksi server");
+
+  } catch (err) {
+    alert("Backend tidak merespon");
+    console.error(err);
   }
 });
 </script>

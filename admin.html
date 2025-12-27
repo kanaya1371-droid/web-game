@@ -1,187 +1,181 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel</title>
-
-<style>
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{
-  margin:0;
-  background:#020617;
-  color:#fff;
-  min-height:100vh;
-}
-header{
-  padding:14px;
-  background:#020617;
-  border-bottom:1px solid #1e293b;
-  text-align:center;
-  font-weight:bold;
-}
-.container{padding:16px}
-input,select,button{
-  width:100%;
-  padding:12px;
-  margin-bottom:10px;
-  border-radius:10px;
-  border:none;
-}
-button{
-  background:#1abc9c;
-  color:#000;
-  font-weight:bold;
-}
-button.red{background:#dc2626;color:#fff}
-.card{
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:14px;
-  padding:14px;
-  margin-bottom:14px;
-}
-.user-row{
-  border-top:1px solid #1e293b;
-  padding-top:10px;
-  margin-top:10px;
-}
-.actions button{
-  margin-top:6px;
-}
-.hidden{display:none}
-</style>
+  <meta charset="UTF-8" />
+  <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <style>
+    .user-box {
+      border: 1px solid #333;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+    .user-box button {
+      margin-top: 5px;
+      margin-right: 5px;
+    }
+  </style>
 </head>
-
 <body>
 
-<header>👮 Admin Panel</header>
-
-<div class="container">
-
-<!-- LOGIN ADMIN -->
-<div id="loginBox" class="card">
-  <h3>Login Admin</h3>
-  <input id="adminKey" type="password" placeholder="Admin Key">
-  <button onclick="loginAdmin()">Masuk</button>
+<div class="card" id="loginBox">
+  <h2>Admin Login</h2>
+  <input type="password" id="adminKey" placeholder="Admin Key" />
+  <button id="btnAdminLogin">Login</button>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="hidden">
-
-  <div class="card">
-    <button class="red" onclick="logout()">Logout Admin</button>
-  </div>
-
-  <!-- USER LIST -->
-  <div class="card">
-    <h3>👤 Daftar User</h3>
-    <div id="userList">Loading...</div>
-  </div>
-
-</div>
+<div class="card" id="dashboard" style="display:none;">
+  <h2>Admin Panel</h2>
+  <button onclick="logout()">Logout</button>
+  <hr />
+  <div id="userList">Loading user...</div>
 </div>
 
 <script>
-const API = "/.netlify/functions/api";
+const API = "https://obel88.up.railway.app";
+const ADMIN_KEY_STORAGE = "admin_logged";
 
-if(localStorage.getItem("isAdmin")==="true"){
+if (localStorage.getItem(ADMIN_KEY_STORAGE) === "true") {
   showDashboard();
 }
 
-async function loginAdmin(){
+document.getElementById("btnAdminLogin").addEventListener("click", async () => {
   const key = document.getElementById("adminKey").value.trim();
-  if(!key) return alert("Masukkan admin key");
-
-  const res = await fetch(API + "/admin/login",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ key })
-  });
-
-  const data = await res.json();
-  if(!res.ok) return alert(data.message);
-
-  localStorage.setItem("isAdmin","true");
-  showDashboard();
-}
-
-function logout(){
-  localStorage.removeItem("isAdmin");
-  location.reload();
-}
-
-async function showDashboard(){
-  document.getElementById("loginBox").classList.add("hidden");
-  document.getElementById("dashboard").classList.remove("hidden");
-  loadUsers();
-}
-
-async function loadUsers(){
-  const res = await fetch(API + "/admin/users");
-  const users = await res.json();
-
-  const box = document.getElementById("userList");
-  box.innerHTML = "";
-
-  if(!users.length){
-    box.innerHTML = "<i>Belum ada user</i>";
+  if (!key) {
+    alert("Masukkan admin key");
     return;
   }
 
-  users.forEach(u=>{
-    const div = document.createElement("div");
-    div.className = "user-row";
-    div.innerHTML = `
-      <b>${u.username}</b><br>
-      WA: ${u.whatsapp}<br>
-      Status: ${u.status}<br>
-      Saldo: ${u.saldo}
-      <div class="actions">
-        <button onclick="genOtp('${u.username}')">🔐 Generate OTP</button>
-        <button onclick="banUser('${u.username}')">⛔ Ban</button>
-        <select onchange="setWin('${u.username}',this.value)">
-          <option value="">🎰 Mode Kemenangan</option>
-          <option value="normal">Normal</option>
-          <option value="win">Menang</option>
-          <option value="lose">Kalah</option>
-        </select>
-      </div>
-    `;
-    box.appendChild(div);
-  });
+  try {
+    const res = await fetch(API + "/admin/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ key })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      alert(data.message || "Admin key salah");
+      return;
+    }
+
+    localStorage.setItem(ADMIN_KEY_STORAGE, "true");
+    showDashboard();
+
+  } catch (err) {
+    alert("Server tidak merespon");
+    console.error(err);
+  }
+});
+
+function logout() {
+  localStorage.removeItem(ADMIN_KEY_STORAGE);
+  location.reload();
 }
 
-async function genOtp(username){
-  const res = await fetch(API + "/admin/generate-otp",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ username })
-  });
-
-  const data = await res.json();
-  if(!res.ok) return alert(data.message);
-
-  window.open(data.wa,"_blank");
-}
-
-async function banUser(username){
-  const t = prompt("Ban berapa menit? (isi 'permanent' untuk selamanya)");
-  if(!t) return;
-
-  const res = await fetch(API + "/admin/ban",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ username, minutes: t })
-  });
-
-  const data = await res.json();
-  alert(data.message);
+async function showDashboard() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
   loadUsers();
 }
 
-function setWin(username,mode){
-  alert("Mode kemenangan "+username+" diset: "+mode+" (simulasi)");
+async function loadUsers() {
+  try {
+    const res = await fetch(API + "/admin/users");
+    const users = await res.json();
+
+    const box = document.getElementById("userList");
+    box.innerHTML = "";
+
+    if (!users.length) {
+      box.innerHTML = "<p>Belum ada user</p>";
+      return;
+    }
+
+    users.forEach(u => {
+      const div = document.createElement("div");
+      div.className = "user-box";
+
+      div.innerHTML = `
+        <b>Username:</b> ${u.username}<br>
+        <b>WA:</b> ${u.phone}<br>
+        <b>Status:</b> ${u.status}<br>
+
+        <button onclick="generateOtp('${u.username}', '${u.phone}')">
+          Generate OTP
+        </button>
+
+        <button onclick="banUser('${u.username}')">
+          Ban User
+        </button>
+      `;
+
+      box.appendChild(div);
+    });
+
+  } catch (err) {
+    alert("Gagal memuat user");
+    console.error(err);
+  }
+}
+
+async function generateOtp(username, phone) {
+  try {
+    const res = await fetch(API + "/admin/generate-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      alert(data.message || "Gagal generate OTP");
+      return;
+    }
+
+    const pesan = `Halo ${username}, OTP kamu adalah: ${data.otp}`;
+    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(pesan)}`;
+    window.open(waUrl, "_blank");
+
+  } catch (err) {
+    alert("Server error");
+    console.error(err);
+  }
+}
+
+async function banUser(username) {
+  const menit = prompt("Ban berapa menit? (contoh: 15 / 60 / 1440)");
+  if (!menit) return;
+
+  try {
+    const res = await fetch(API + "/admin/ban", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username,
+        minutes: parseInt(menit)
+      })
+    });
+
+    const data = await res.json();
+    alert(data.message || "User dibanned");
+
+    loadUsers();
+
+  } catch (err) {
+    alert("Server error");
+    console.error(err);
+  }
 }
 </script>
 
