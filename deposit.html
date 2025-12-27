@@ -1,38 +1,41 @@
-,<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Deposit</title>
-<style>
-body{margin:0;font-family:Arial;background:#020617;color:#fff}
-.box{padding:16px}
-.card{border:1px solid #1e293b;border-radius:14px;padding:16px}
-input,button{width:100%;padding:12px;border-radius:10px;border:none;margin-top:10px}
-button{background:#1abc9c;color:#000;font-weight:bold}
-.note{font-size:13px;opacity:.85;margin-top:10px}
-</style>
+  <meta charset="UTF-8">
+  <title>Deposit</title>
+  <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
-<div class="box">
-  <div class="card">
-    <h3>💰 Deposit</h3>
-    <input id="amount" type="number" placeholder="Jumlah (min 10000)">
-    <button onclick="submit()">Ajukan Deposit</button>
-    <div class="note">
-      • Minimal deposit 10.000<br>
-      • Deposit diproses manual admin
-    </div>
-  </div>
+
+<div class="card">
+  <h2>Deposit</h2>
+
+  <p>Minimal deposit Rp 10.000</p>
+  <p>Deposit diproses manual oleh admin</p>
+
+  <input id="amount" type="number" placeholder="Jumlah deposit">
+
+  <button onclick="deposit()">Kirim Permintaan</button>
 </div>
+
 <script>
-const user=JSON.parse(localStorage.getItem("user"));
-if(!user) location.href="login.html";
-function submit(){
-  const a=+amount.value;
-  if(a<10000) return alert("Minimal 10.000");
-  alert("Permintaan deposit dikirim ke admin");
-  // simulasi: admin acc manual
+const API = "https://obel88.up.railway.app";
+const user = JSON.parse(localStorage.getItem("user"));
+
+async function deposit() {
+  const amount = Number(document.getElementById("amount").value);
+  if (amount < 10000) return alert("Minimal deposit 10.000");
+
+  const res = await fetch(API + "/deposit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: user.username, amount })
+  });
+
+  const data = await res.json();
+  alert(data.message || "Permintaan dikirim");
 }
 </script>
+
 </body>
 </html>
