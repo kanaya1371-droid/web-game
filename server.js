@@ -14,7 +14,14 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+// ⛔ JANGAN HARDCODE PORT
+const PORT = process.env.PORT;
+
+if (!PORT) {
+  console.error("PORT environment variable not set");
+  process.exit(1);
+}
+
+app.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port", PORT);
 });
