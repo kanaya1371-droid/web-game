@@ -1,146 +1,49 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Roulette</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="assets/style.css">
 <style>
-.wheel{
-  width:150px;height:150px;border-radius:50%;
-  border:6px solid #1f2937;margin:14px auto;
-  display:flex;align-items:center;justify-content:center;
-  font-size:32px;background:#020617
-}
-.spin{animation:spin 1.2s ease-out}
-@keyframes spin{
-  from{transform:rotate(0deg)}
-  to{transform:rotate(720deg)}
-}
+body{margin:0;font-family:Arial;background:#020617;color:#fff;text-align:center}
+.wrap{padding:16px}
+select,input,button{padding:10px;border-radius:10px;border:none;margin:6px}
+button{background:#1abc9c;color:#000;font-weight:bold}
+.wheel{font-size:60px;margin:20px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
-
 <body>
-<div class="card">
-  <h2>🎯 Roulette</h2>
-
-  <p style="text-align:center">
-    Coin: <b id="coin"></b>
-  </p>
-
-  <div id="wheel" class="wheel">?</div>
-
-  <input id="bet" type="number" placeholder="Masukkan bet">
-  <input id="num" type="number" min="0" max="36"
-         placeholder="Nomor (0–36, opsional)">
-
-  <button onclick="spinColor('merah')">MERAH (x5)</button>
-  <button onclick="spinColor('hitam')">HITAM (x5)</button>
-  <button onclick="spinNumber()">NOMOR (x36)</button>
-
-  <p id="result" style="text-align:center;margin-top:12px"></p>
-
-  <button onclick="back()" style="margin-top:16px">⬅ Kembali</button>
+<div class="wrap">
+  <h3>🎯 Roulette</h3>
+  <div id="wheel" class="wheel">🎯</div>
+  <input id="bet" type="number" placeholder="Taruhan">
+  <select id="type">
+    <option value="red">Merah (x5)</option>
+    <option value="black">Hitam (x5)</option>
+    <option value="number">Nomor (x36)</option>
+  </select>
+  <input id="num" type="number" placeholder="Nomor (0-36)">
+  <button onclick="play()">Putar</button>
+  <p id="res"></p>
 </div>
-
 <script>
-const API = "/.netlify/functions/api";
-const userId = localStorage.getItem("userId");
-let coins = parseInt(localStorage.getItem("coins") || "0");
-
-if (!userId) location.href = "login.html";
-document.getElementById("coin").innerText = coins;
-
-const wheel = document.getElementById("wheel");
-const betEl = document.getElementById("bet");
-const numEl = document.getElementById("num");
-
-/* ambil control mode admin */
-async function getMode(){
-  const users = await (await fetch(API + "/admin/users")).json();
-  const u = users.find(x => x._id === userId);
-  return u?.controlMode || "normal";
-}
-
-/* ===== TARUHAN WARNA (x5) ===== */
-async function spinColor(choice){
-  const bet = parseInt(betEl.value);
-  if (!bet || bet <= 0) return alert("Bet tidak valid");
-  if (bet > coins) return alert("Coin tidak cukup");
-
-  const mode = await getMode();
-
-  wheel.classList.add("spin");
-  setTimeout(async () => {
-    wheel.classList.remove("spin");
-
-    let number = Math.floor(Math.random() * 37);
-    let color = number === 0 ? "hijau" : (number % 2 === 0 ? "hitam" : "merah");
-
-    // CONTROL MODE
-    if (mode === "lose") color = (choice === "merah") ? "hitam" : "merah";
-    if (mode === "win")  color = choice;
-
-    wheel.textContent = number;
-
-    const win = color === choice;
-    const payout = win ? bet * 5 : 0;
-
-    await settle(bet, win, payout, `Angka ${number} (${color})`);
-  }, 1200);
-}
-
-/* ===== TARUHAN NOMOR (x36) ===== */
-async function spinNumber(){
-  const bet = parseInt(betEl.value);
-  const pick = parseInt(numEl.value);
-
-  if (!bet || bet <= 0) return alert("Bet tidak valid");
-  if (isNaN(pick) || pick < 0 || pick > 36)
-    return alert("Nomor harus 0–36");
-  if (bet > coins) return alert("Coin tidak cukup");
-
-  const mode = await getMode();
-
-  wheel.classList.add("spin");
-  setTimeout(async () => {
-    wheel.classList.remove("spin");
-
-    let number = Math.floor(Math.random() * 37);
-
-    // CONTROL MODE
-    if (mode === "lose" && number === pick)
-      number = (pick + 1) % 37;
-    if (mode === "win")
-      number = pick;
-
-    wheel.textContent = number;
-
-    const win = number === pick;
-    const payout = win ? bet * 36 : 0;
-
-    await settle(bet, win, payout, `Nomor ${number}`);
-  }, 1200);
-}
-
-/* ===== SETTLEMENT ===== */
-async function settle(bet, win, payout, label){
-  await fetch(API + "/bet", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ userId, bet, win })
-  });
-
-  coins += win ? payout : -bet;
-  localStorage.setItem("coins", coins);
-  document.getElementById("coin").innerText = coins;
-
-  document.getElementById("result").innerText =
-    `${label} → ${win ? "🎉 MENANG " + payout : "❌ KALAH"}`;
-}
-
-function back(){
-  location.href = "home.html";
+let user=JSON.parse(localStorage.getItem("user"));
+if(!user) location.href="login.html";
+function play(){
+  const b=+bet.value; if(b<=0) return alert("Taruhan?");
+  if((user.saldo||0)<b) return alert("Saldo kurang");
+  wheel.style.animationPlayState="running";
+  setTimeout(()=>{
+    wheel.style.animationPlayState="paused";
+    const winNum=Math.floor(Math.random()*37);
+    const winColor=winNum%2?"red":"black";
+    let win=false,multi=0;
+    if(type.value==="number" && +num.value===winNum){win=true;multi=36}
+    if(type.value!=="number" && type.value===winColor){win=true;multi=5}
+    if(win){ user.saldo=(user.saldo||0)+b*multi; res.textContent=`MENANG! x${multi}` }
+    else{ user.saldo=(user.saldo||0)-b; res.textContent=`KALAH! keluar ${winNum}` }
+    localStorage.setItem("user",JSON.stringify(user));
+  },1000);
 }
 </script>
 </body>

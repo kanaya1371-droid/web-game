@@ -1,93 +1,34 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Profil</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="assets/style.css">
-<link rel="stylesheet" href="assets/layout.css">
+<style>
+body{margin:0;font-family:Arial;background:#020617;color:#fff}
+.box{padding:16px}
+.card{border:1px solid #1e293b;border-radius:14px;padding:16px}
+input,button{width:100%;padding:12px;border-radius:10px;border:none;margin-top:10px}
+button{background:#1abc9c;color:#000;font-weight:bold}
+</style>
 </head>
-
 <body>
-
-<!-- ☰ MENU BUTTON -->
-<div class="menu-btn" onclick="toggleMenu()">☰</div>
-
-<!-- SIDEBAR -->
-<div class="sidebar" id="sidebar">
-  <h3>Menu</h3>
-  <a href="deposit.html">💰 Deposit</a>
-  <a href="withdraw.html">💸 Withdraw</a>
-  <a href="statistik.html">📊 Statistik</a>
-  <a href="profil.html">👤 Profil</a>
-  <a href="history.html">🕓 Riwayat Bermain</a>
-  <a href="#" onclick="logout()">🚪 Logout</a>
+<div class="box">
+  <div class="card">
+    <h3>👤 Profil</h3>
+    <p id="info"></p>
+    <input id="newpass" type="password" placeholder="Password baru">
+    <button onclick="save()">Ganti Password</button>
+  </div>
 </div>
-
-<!-- OVERLAY -->
-<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
-
-<!-- CONTENT -->
-<div class="card" style="margin-top:40px">
-  <h2>👤 Profil Saya</h2>
-
-  <p>
-    Username: <b id="username"></b><br>
-    WhatsApp: <b id="whatsapp"></b>
-  </p>
-
-  <hr style="border:1px solid #1f2937;margin:16px 0">
-
-  <h3>🔑 Ubah Password</h3>
-
-  <input id="oldPassword" type="password" placeholder="Password lama">
-  <input id="newPassword" type="password" placeholder="Password baru">
-
-  <button onclick="changePassword()">Simpan Password</button>
-
-  <button onclick="back()" style="margin-top:16px">
-    ⬅ Kembali ke Home
-  </button>
-</div>
-
 <script>
-const API = "/.netlify/functions/api";
-const username = localStorage.getItem("username");
-const whatsapp = localStorage.getItem("whatsapp");
-
-if (!username) {
-  window.location.href = "login.html";
-}
-
-document.getElementById("username").innerText = username;
-document.getElementById("whatsapp").innerText = whatsapp || "-";
-
-async function changePassword() {
-  const oldPassword = document.getElementById("oldPassword").value.trim();
-  const newPassword = document.getElementById("newPassword").value.trim();
-
-  if (!oldPassword || !newPassword) {
-    alert("Semua field wajib diisi");
-    return;
-  }
-
-  alert(
-    "Untuk keamanan, ubah password melalui menu Lupa Password (OTP admin)."
-  );
-}
-
-function back() {
-  window.location.href = "home.html";
-}
-
-function logout() {
-  localStorage.clear();
-  window.location.href = "login.html";
-}
-
-function toggleMenu() {
-  document.getElementById("sidebar").classList.toggle("active");
-  document.getElementById("overlay").classList.toggle("active");
+let user=JSON.parse(localStorage.getItem("user"));
+if(!user) location.href="login.html";
+info.innerHTML=`Username: <b>${user.username}</b><br>Saldo: ${user.saldo||0}`;
+function save(){
+  if(!newpass.value) return alert("Isi password");
+  user.password=newpass.value;
+  localStorage.setItem("user",JSON.stringify(user));
+  alert("Password diganti");
 }
 </script>
 </body>
