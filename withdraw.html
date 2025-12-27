@@ -1,39 +1,42 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Withdraw</title>
-<style>
-body{margin:0;font-family:Arial;background:#020617;color:#fff}
-.box{padding:16px}
-.card{border:1px solid #1e293b;border-radius:14px;padding:16px}
-input,button{width:100%;padding:12px;border-radius:10px;border:none;margin-top:10px}
-button{background:#1abc9c;color:#000;font-weight:bold}
-.note{font-size:13px;opacity:.85;margin-top:10px}
-</style>
+  <meta charset="UTF-8">
+  <title>Withdraw</title>
+  <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
-<div class="box">
-  <div class="card">
-    <h3>🏧 Withdraw</h3>
-    <input id="amount" type="number" placeholder="Jumlah (min 50000)">
-    <button onclick="submit()">Ajukan Withdraw</button>
-    <div class="note">
-      • Minimal withdraw 50.000<br>
-      • Saldo mencukupi<br>
-      • Diproses manual admin
-    </div>
-  </div>
+
+<div class="card">
+  <h2>Withdraw</h2>
+
+  <p>Minimal withdraw Rp 50.000</p>
+  <p>Saldo harus mencukupi</p>
+
+  <input id="amount" type="number" placeholder="Jumlah withdraw">
+
+  <button onclick="withdraw()">Kirim Permintaan</button>
 </div>
+
 <script>
-const user=JSON.parse(localStorage.getItem("user"));
-if(!user) location.href="login.html";
-function submit(){
-  const a=+amount.value;
-  if(a<50000) return alert("Minimal 50.000");
-  if((user.saldo||0)<a) return alert("Saldo tidak cukup");
-  alert("Permintaan withdraw dikirim ke admin");
+const API = "https://budil138.netlify.app";
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) location.href = "login.html";
+
+async function withdraw() {
+  const amount = Number(document.getElementById("amount").value);
+  if (amount < 50000) return alert("Minimal withdraw 50.000");
+
+  const res = await fetch(API + "/withdraw", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: user.username, amount })
+  });
+
+  const data = await res.json();
+  alert(data.message || "Permintaan diproses");
 }
 </script>
+
 </body>
 </html>
