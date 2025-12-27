@@ -2,114 +2,92 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Blackjack</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="assets/style.css">
+<style>
+body{margin:0;background:#020617;color:#fff;font-family:Arial;text-align:center}
+.wrap{padding:16px}
+.card{font-size:24px;margin:10px}
+button,input{padding:12px;border:none;border-radius:10px;margin:6px}
+button{background:#1abc9c;color:#000;font-weight:bold}
+</style>
 </head>
-
 <body>
-<div class="card">
-  <h2>🂡 Blackjack</h2>
 
-  <p style="text-align:center">
-    Coin: <b id="coin"></b>
-  </p>
+<div class="wrap">
+  <h3>🃏 Blackjack</h3>
+  <input id="bet" type="number" placeholder="Taruhan">
+  <div>
+    <button onclick="start()">Start</button>
+    <button onclick="hit()">Hit</button>
+    <button onclick="stand()">Stand</button>
+  </div>
 
-  <input id="bet" type="number" placeholder="Masukkan bet">
-
-  <button onclick="play()">Draw Card</button>
-
-  <p id="result" style="text-align:center;margin-top:12px"></p>
-
-  <button onclick="back()" style="margin-top:16px">⬅ Kembali</button>
+  <div class="card">Player: <span id="p"></span></div>
+  <div class="card">Dealer: <span id="d"></span></div>
+  <p id="res"></p>
 </div>
 
 <script>
-const API = "/.netlify/functions/api";
-const userId = localStorage.getItem("userId");
-let coins = parseInt(localStorage.getItem("coins") || "0");
+let user=JSON.parse(localStorage.getItem("user"));
+if(!user) location.href="login.html";
 
-if (!userId) window.location.href = "login.html";
-document.getElementById("coin").innerText = coins;
+let p=[],d=[],betVal=0,done=false;
 
-/* ===== Statistik ===== */
-function updateStats(win, bet) {
-  const stats = JSON.parse(localStorage.getItem("stats") || "{}");
-  stats.play = (stats.play || 0) + 1;
-  stats.bet  = (stats.bet  || 0) + bet;
-  win ? stats.win = (stats.win || 0) + 1
-      : stats.lose = (stats.lose || 0) + 1;
-  localStorage.setItem("stats", JSON.stringify(stats));
+function draw(){ return Math.floor(Math.random()*10)+1 }
+
+function sum(a){ return a.reduce((x,y)=>x+y,0) }
+
+function start(){
+  betVal=+bet.value;
+  if(betVal<=0) return alert("Taruhan?");
+  if((user.saldo||0)<betVal) return alert("Saldo kurang");
+  p=[draw(),draw()];
+  d=[draw()];
+  done=false;
+  update();
 }
 
-/* ===== Riwayat ===== */
-function saveHistory(bet, win, player, dealer) {
-  const history = JSON.parse(localStorage.getItem("history") || "[]");
-  history.push({
-    game: "Blackjack",
-    bet,
-    result: win ? "Menang" : "Kalah",
-    detail: `Player ${player} vs Dealer ${dealer}`,
-    time: new Date().toLocaleString()
-  });
-  localStorage.setItem("history", JSON.stringify(history));
+function hit(){
+  if(done) return;
+  p.push(draw());
+  if(sum(p)>21) end(false);
+  update();
 }
 
-async function play() {
-  const bet = parseInt(document.getElementById("bet").value);
-  if (!bet || bet <= 0) return alert("Bet tidak valid");
-  if (bet > coins) return alert("Coin tidak cukup");
+function stand(){
+  if(done) return;
+  while(sum(d)<17) d.push(draw());
+  const ps=sum(p), ds=sum(d);
+  if(ds>21||ps>ds) end(true);
+  else if(ps===ds) end(null);
+  else end(false);
+}
 
-  /* 🔑 Ambil CONTROL MODE dari backend */
-  const resUser = await fetch(API + "/admin/users");
-  const users = await resUser.json();
-  const user = users.find(u => u._id === userId);
-  const mode = user?.controlMode || "normal";
-
-  let player, dealer, winChance;
-
-  if (mode === "lose") {
-    // kartu jelek
-    player = 15 + Math.floor(Math.random() * 3); // 15–17
-    dealer = 18 + Math.floor(Math.random() * 4); // 18–21
-    winChance = 0.05;
-  } else if (mode === "win") {
-    // kartu bagus
-    player = 19 + Math.floor(Math.random() * 3); // 19–21
-    dealer = 16 + Math.floor(Math.random() * 3); // 16–18
-    winChance = 0.85;
-  } else {
-    // normal
-    player = 15 + Math.floor(Math.random() * 7); // 15–21
-    dealer = 15 + Math.floor(Math.random() * 7);
-    winChance = 0.48;
+function end(win){
+  done=true;
+  if(win===true){
+    user.saldo+=betVal*2;
+    res.textContent="MENANG x2";
+  }else if(win===null){
+    res.textContent="SERI";
+  }else{
+    user.saldo-=betVal;
+    res.textContent="KALAH";
   }
-
-  const win =
-    Math.random() < winChance &&
-    (player <= 21 && (player > dealer || dealer > 21));
-
-  await fetch(API + "/bet", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ userId, bet, win })
-  });
-
-  coins += win ? bet : -bet;
-  localStorage.setItem("coins", coins);
-  document.getElementById("coin").innerText = coins;
-
-  updateStats(win, bet);
-  saveHistory(bet, win, player, dealer);
-
-  document.getElementById("result").innerText =
-    `MODE: ${mode.toUpperCase()} | Player: ${player} | Dealer: ${dealer} → ` +
-    (win ? "🎉 MENANG!" : "❌ KALAH!");
+  localStorage.setItem("user",JSON.stringify(user));
 }
 
-function back() {
-  window.location.href = "home.html";
+function update(){
+  pEl.textContent=p.join(", ")+" ("+sum(p)+")";
+  dEl.textContent=d.join(", ")+" ("+sum(d)+")";
 }
 </script>
+
+<script>
+const pEl=document.getElementById("p");
+const dEl=document.getElementById("d");
+</script>
+
 </body>
 </html>
