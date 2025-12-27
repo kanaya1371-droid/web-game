@@ -2,112 +2,188 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Admin Panel Final</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="assets/style.css">
-<link rel="stylesheet" href="assets/layout.css">
+<title>Admin Panel</title>
+
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{
+  margin:0;
+  background:#020617;
+  color:#fff;
+  min-height:100vh;
+}
+header{
+  padding:14px;
+  background:#020617;
+  border-bottom:1px solid #1e293b;
+  text-align:center;
+  font-weight:bold;
+}
+.container{padding:16px}
+input,select,button{
+  width:100%;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:10px;
+  border:none;
+}
+button{
+  background:#1abc9c;
+  color:#000;
+  font-weight:bold;
+}
+button.red{background:#dc2626;color:#fff}
+.card{
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:14px;
+}
+.user-row{
+  border-top:1px solid #1e293b;
+  padding-top:10px;
+  margin-top:10px;
+}
+.actions button{
+  margin-top:6px;
+}
+.hidden{display:none}
+</style>
 </head>
 
 <body>
-<div class="card" style="max-width:600px">
-  <h2>👮 Admin Panel</h2>
 
+<header>👮 Admin Panel</header>
+
+<div class="container">
+
+<!-- LOGIN ADMIN -->
+<div id="loginBox" class="card">
+  <h3>Login Admin</h3>
   <input id="adminKey" type="password" placeholder="Admin Key">
-  <button onclick="login()">Masuk Admin</button>
+  <button onclick="loginAdmin()">Masuk</button>
+</div>
 
-  <div id="panel" style="display:none;margin-top:16px">
-    <h3>Daftar User</h3>
-    <ul id="users"></ul>
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+  <div class="card">
+    <button class="red" onclick="logout()">Logout Admin</button>
   </div>
+
+  <!-- USER LIST -->
+  <div class="card">
+    <h3>👤 Daftar User</h3>
+    <div id="userList">Loading...</div>
+  </div>
+
+</div>
 </div>
 
 <script>
 const API = "/.netlify/functions/api";
-const ADMIN_KEY = "agung137"; // GANTI setelah deploy
 
-function login() {
-  if (document.getElementById("adminKey").value !== ADMIN_KEY) {
-    alert("Admin key salah");
-    return;
-  }
-  document.getElementById("panel").style.display = "block";
+if(localStorage.getItem("isAdmin")==="true"){
+  showDashboard();
+}
+
+async function loginAdmin(){
+  const key = document.getElementById("adminKey").value.trim();
+  if(!key) return alert("Masukkan admin key");
+
+  const res = await fetch(API + "/admin/login",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ key })
+  });
+
+  const data = await res.json();
+  if(!res.ok) return alert(data.message);
+
+  localStorage.setItem("isAdmin","true");
+  showDashboard();
+}
+
+function logout(){
+  localStorage.removeItem("isAdmin");
+  location.reload();
+}
+
+async function showDashboard(){
+  document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
   loadUsers();
 }
 
-async function loadUsers() {
+async function loadUsers(){
   const res = await fetch(API + "/admin/users");
   const users = await res.json();
-  const ul = document.getElementById("users");
-  ul.innerHTML = "";
 
-  users.forEach(u => {
-    ul.innerHTML += `
-      <li style="margin-bottom:18px">
-        <b>${u.username}</b><br>
-        WA: ${u.whatsapp}<br>
-        Coin: ${u.coins}<br>
-        Status: ${u.status}<br>
-        Control Mode: <b>${u.controlMode || "normal"}</b><br><br>
+  const box = document.getElementById("userList");
+  box.innerHTML = "";
 
-        <!-- OTP -->
-        <button onclick="generateOtp('${u.username}','register')">
-          OTP Register
-        </button>
-        <button onclick="generateOtp('${u.username}','reset')">
-          OTP Reset
-        </button>
-        <br><br>
-
-        <!-- CONTROL MODE -->
-        <select id="mode-${u.username}">
-          <option value="normal">Normal</option>
-          <option value="lose">Cepat Lose</option>
-          <option value="win">Cepat Win</option>
-        </select>
-
-        <button onclick="setMode('${u.username}')">
-          Simpan Mode
-        </button>
-      </li>
-    `;
-  });
-}
-
-/* ===== OTP ===== */
-async function generateOtp(username, purpose) {
-  const res = await fetch(API + "/admin/generate-otp", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ username, purpose })
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    alert(data.msg || "Gagal generate OTP");
+  if(!users.length){
+    box.innerHTML = "<i>Belum ada user</i>";
     return;
   }
 
-  const waText = encodeURIComponent(
-    `Halo ${username}, kode OTP kamu adalah: ${data.otp}`
-  );
-
-  window.open(`https://wa.me/${data.whatsapp}?text=${waText}`, "_blank");
+  users.forEach(u=>{
+    const div = document.createElement("div");
+    div.className = "user-row";
+    div.innerHTML = `
+      <b>${u.username}</b><br>
+      WA: ${u.whatsapp}<br>
+      Status: ${u.status}<br>
+      Saldo: ${u.saldo}
+      <div class="actions">
+        <button onclick="genOtp('${u.username}')">🔐 Generate OTP</button>
+        <button onclick="banUser('${u.username}')">⛔ Ban</button>
+        <select onchange="setWin('${u.username}',this.value)">
+          <option value="">🎰 Mode Kemenangan</option>
+          <option value="normal">Normal</option>
+          <option value="win">Menang</option>
+          <option value="lose">Kalah</option>
+        </select>
+      </div>
+    `;
+    box.appendChild(div);
+  });
 }
 
-/* ===== CONTROL MODE ===== */
-async function setMode(username) {
-  const mode = document.getElementById(`mode-${username}`).value;
-
-  const res = await fetch(API + "/admin/control", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ username, mode })
+async function genOtp(username){
+  const res = await fetch(API + "/admin/generate-otp",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ username })
   });
 
   const data = await res.json();
-  alert(data.msg || "Mode diperbarui");
+  if(!res.ok) return alert(data.message);
+
+  window.open(data.wa,"_blank");
+}
+
+async function banUser(username){
+  const t = prompt("Ban berapa menit? (isi 'permanent' untuk selamanya)");
+  if(!t) return;
+
+  const res = await fetch(API + "/admin/ban",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ username, minutes: t })
+  });
+
+  const data = await res.json();
+  alert(data.message);
   loadUsers();
 }
+
+function setWin(username,mode){
+  alert("Mode kemenangan "+username+" diset: "+mode+" (simulasi)");
+}
 </script>
+
 </body>
 </html>
