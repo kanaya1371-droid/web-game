@@ -1,154 +1,41 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Home</title>
-
-<style>
-*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{
-  margin:0;
-  background:#020617;
-  color:#fff;
-  min-height:100vh;
-}
-header{
-  display:flex;
-  align-items:center;
-  padding:12px 16px;
-  background:#020617;
-  border-bottom:1px solid #1e293b;
-}
-.menu-btn{
-  font-size:22px;
-  margin-right:12px;
-  cursor:pointer;
-}
-.title{
-  font-size:18px;
-  font-weight:bold;
-}
-.balance{
-  margin-left:auto;
-  font-size:14px;
-}
-.sidebar{
-  position:fixed;
-  top:0;left:-260px;
-  width:260px;height:100%;
-  background:#020617;
-  border-right:1px solid #1e293b;
-  padding:16px;
-  transition:.3s;
-  z-index:10;
-}
-.sidebar.active{left:0}
-.sidebar h3{margin-top:0}
-.sidebar a{
-  display:block;
-  padding:10px;
-  margin-bottom:6px;
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:10px;
-  color:#fff;
-  text-decoration:none;
-}
-.overlay{
-  display:none;
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(0,0,0,.5);
-  z-index:5;
-}
-.overlay.active{display:block}
-.main{
-  padding:16px;
-}
-.games{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-  gap:12px;
-}
-.game{
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:16px;
-  padding:20px;
-  text-align:center;
-  cursor:pointer;
-  transition:.2s;
-}
-.game:hover{
-  transform:scale(1.03);
-  border-color:#1abc9c;
-}
-.game span{
-  font-size:40px;
-  display:block;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Home</title>
+  <link rel="stylesheet" href="/assets/style.css">
 </head>
-
 <body>
 
+<div class="menu" onclick="toggleMenu()">☰</div>
+
 <div class="sidebar" id="sidebar">
-  <h3>Menu</h3>
-  <a href="deposit.html">💰 Deposit</a>
-  <a href="withdraw.html">🏧 Withdraw</a>
-  <a href="profil.html">👤 Profil</a>
-  <a href="history.html">📜 Riwayat Main</a>
-  <a href="#" onclick="logout()">🚪 Logout</a>
+  <a href="deposit.html">Deposit</a>
+  <a href="withdraw.html">Withdraw</a>
+  <a href="roulette.html">Roulette</a>
+  <a href="slot.html">Slot</a>
+  <a href="history.html">Riwayat</a>
+  <a href="#" onclick="logout()">Logout</a>
 </div>
 
-<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
-
-<header>
-  <div class="menu-btn" onclick="toggleMenu()">☰</div>
-  <div class="title">Casino</div>
-  <div class="balance">Coin: <b id="coin">0</b></div>
-</header>
-
-<div class="main">
-  <h3>Pilih Game</h3>
-  <div class="games">
-    <div class="game" onclick="go('roulette.html')">
-      <span>🎯</span>Roulette
-    </div>
-    <div class="game" onclick="go('dadu.html')">
-      <span>🎲</span>Dadu
-    </div>
-    <div class="game" onclick="go('blackjack.html')">
-      <span>🃏</span>Blackjack
-    </div>
-    <div class="game" onclick="go('slot.html')">
-      <span>🎰</span>Slot
-    </div>
-  </div>
+<div class="card">
+  <h2>Selamat Datang</h2>
+  <p id="userInfo"></p>
 </div>
 
 <script>
 const user = JSON.parse(localStorage.getItem("user"));
-if(!user){
-  alert("Silakan login");
-  location.href = "login.html";
+if (!user) location.href = "login.html";
+
+document.getElementById("userInfo").innerText =
+  "Username: " + user.username + " | Saldo: Rp " + user.balance;
+
+function toggleMenu() {
+  document.getElementById("sidebar").classList.toggle("show");
 }
 
-document.getElementById("coin").innerText = user.saldo || 0;
-
-function toggleMenu(){
-  document.getElementById("sidebar").classList.toggle("active");
-  document.getElementById("overlay").classList.toggle("active");
-}
-
-function go(page){
-  window.location.href = page;
-}
-
-function logout(){
-  localStorage.removeItem("user");
+function logout() {
+  localStorage.clear();
   location.href = "login.html";
 }
 </script>
