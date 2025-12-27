@@ -1,27 +1,5 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <title>Daftar Akun</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="assets/style.css" />
-</head>
-<body>
-
-<div class="card">
-  <h2>Daftar Akun</h2>
-
-  <input type="text" id="username" placeholder="Username" />
-  <input type="tel" id="phone" placeholder="Nomor WhatsApp" />
-  <input type="password" id="password" placeholder="Password" />
-
-  <button id="btnDaftar">Daftar</button>
-
-  <p>Sudah punya akun? <a href="login.html">Login</a></p>
-</div>
-
 <script>
-const API = "https://obel88.up.railway.app";
+const API = "https://budil88.up.railway.app";
 
 document.getElementById("btnDaftar").addEventListener("click", async () => {
   const username = document.getElementById("username").value.trim();
@@ -34,7 +12,7 @@ document.getElementById("btnDaftar").addEventListener("click", async () => {
   }
 
   try {
-    const res = await fetch(API + "/register", {
+    const res = await fetch(API + "/api/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -49,21 +27,14 @@ document.getElementById("btnDaftar").addEventListener("click", async () => {
     const data = await res.json();
 
     if (data.success) {
-      // simpan username utk OTP
       localStorage.setItem("otp_user", username);
-
-      // PINDAH KE HALAMAN OTP
       window.location.href = "otp.html";
     } else {
       alert(data.message || "Gagal mendaftar");
     }
-
   } catch (err) {
     alert("Backend tidak merespon");
     console.error(err);
   }
 });
 </script>
-
-</body>
-</html>
