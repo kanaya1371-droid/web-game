@@ -1,67 +1,106 @@
+
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Verifikasi OTP</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="assets/style.css">
+<title>Verifikasi OTP</title>
+
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{
+  margin:0;height:100vh;
+  background:linear-gradient(120deg,#0f2027,#203a43,#2c5364);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;
+}
+.card{
+  width:90%;max-width:360px;
+  background:rgba(0,0,0,.6);
+  padding:28px;border-radius:16px;
+  box-shadow:0 20px 40px rgba(0,0,0,.6);
+  animation:fadeIn .6s ease;
+}
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+h2{text-align:center;margin-bottom:18px}
+input{
+  width:100%;padding:14px;margin-bottom:14px;
+  border:none;border-radius:10px;font-size:15px;
+}
+button{
+  width:100%;padding:14px;border:none;border-radius:10px;
+  font-size:16px;font-weight:bold;cursor:pointer;
+}
+.btn-primary{background:#1abc9c;color:#000}
+.btn-alt{background:#3498db;color:#fff;margin-top:10px}
+.note{font-size:13px;text-align:center;margin-top:12px;opacity:.85}
+</style>
 </head>
 
 <body>
-  <div class="card">
-    <h2>🔐 Verifikasi OTP</h2>
 
-    <input id="username" placeholder="Username terdaftar">
-    <input id="otp" placeholder="Masukkan kode OTP">
+<div class="card">
+  <h2>Verifikasi OTP</h2>
 
-    <button onclick="verifyOtp()">Verifikasi OTP</button>
+  <input id="otp" placeholder="Masukkan OTP">
 
-    <small>
-      Belum dapat OTP?
-      <a href="#" onclick="requestOtp()">Minta OTP via WhatsApp</a>
-    </small>
+  <button class="btn-primary" onclick="verifyOtp()">Verifikasi OTP</button>
+  <button class="btn-alt" onclick="requestOtp()">Minta OTP ke Admin</button>
+
+  <div class="note">
+    OTP dikirim manual oleh admin via WhatsApp
   </div>
+</div>
 
 <script>
 const API = "/.netlify/functions/api";
-const ADMIN_WA = "6281234567890"; // GANTI nomor admin
+const username = localStorage.getItem("pendingUser");
 
-async function verifyOtp() {
-  const username = document.getElementById("username").value.trim();
-  const code = document.getElementById("otp").value.trim();
-
-  if (!username || !code) {
-    alert("Username dan OTP wajib diisi");
-    return;
-  }
-
-  const res = await fetch(API + "/verify-otp", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, code })
-  });
-
-  const data = await res.json();
-  alert(data.msg);
-
-  if (res.ok) {
-    window.location.href = "login.html";
-  }
+if(!username){
+  alert("Session tidak ditemukan, silakan daftar ulang");
+  location.href = "register.html";
 }
 
-function requestOtp() {
-  const username = document.getElementById("username").value.trim();
-  if (!username) {
-    alert("Isi username dulu");
+// GANTI NOMOR WA ADMIN
+const ADMIN_WA = "6289526628983";
+
+function requestOtp(){
+  const text = encodeURIComponent(
+    `Halo Admin, saya minta OTP untuk user: ${username}`
+  );
+  window.open(`https://wa.me/${ADMIN_WA}?text=${text}`,"_blank");
+}
+
+async function verifyOtp(){
+  const otp = document.getElementById("otp").value.trim();
+  if(!otp){
+    alert("Masukkan OTP");
     return;
   }
 
-  const text = encodeURIComponent(
-    `Halo Admin, saya user dengan username ${username} meminta OTP pendaftaran.`
-  );
+  try{
+    const res = await fetch(API + "/verify-otp",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ username, otp })
+    });
 
-  window.open(`https://wa.me/${ADMIN_WA}?text=${text}`, "_blank");
+    const data = await res.json();
+    alert(data.message);
+
+    if(res.ok){
+      localStorage.removeItem("pendingUser");
+      window.location.href = "login.html";
+    }
+  }catch(err){
+    alert("Gagal verifikasi OTP");
+  }
 }
 </script>
+
 </body>
 </html>
